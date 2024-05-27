@@ -1,0 +1,142 @@
+import { CodeSurfer } from "code-surfer";
+import { vsDark, nightOwl } from "@code-surfer/themes";
+import { Notes } from "mdx-deck";
+
+import 'prismjs/components/prism-csharp';
+
+import "./styles.css";
+
+export const theme = {
+  googleFont: "https://fonts.googleapis.com/css?family=IBM+Plex+Mono",
+  fonts: {
+    body: '"IBM Plex Mono", monospace',
+    monospace: '"IBM Plex Mono", monospace',
+  },
+  colors: {
+    text: "#f0eeed",
+    background: "#161a1e",
+  },
+  styles: {
+    root: {
+      textAlign: "left",
+    },
+    Slide: {
+      display: "block",
+    },
+    h1: {
+      paddingBottom: "0.5em",
+      borderBottom: "10px solid",
+    },
+    h2: {
+      paddingBottom: "0.4em",
+      borderBottom: "5px solid",
+    },
+    h3: {
+      paddingBottom: "0.3em",
+      borderBottom: "5px solid",
+    },
+    p: {
+      fontSize: "0.75em",
+    },
+    li: {
+      fontSize: "0.75em",
+      marginBottom: "1em",
+    },
+  },
+};
+
+<div className="title-slide">
+
+  # Concurrent programming models in .NET
+  Péter Kádár
+
+</div>
+
+---
+ 
+ <div className="center-slide">
+
+   ## Introduction
+  - developer more than 11 years ago 
+  - 1.5 years ago joined to Betsson Sportsbook
+  - 7+ years experience as outsourced developer
+
+</div>
+
+<Notes>
+  <div class="notes">
+    <p>Betsson team, current responsibility</p>
+    <p>Different experience at different giant companies</p>
+  </div>
+</Notes>
+
+---
+
+<div className="content-slide">
+
+### Today's topic
+
+</div>
+
+---
+
+<div className="content-slide">
+
+### What is Concurrency?
+
+- Concurrency is about composing and coordinating independently executing processes.
+- It is a way to structure a program to handle multiple tasks that could be independent or interdependent.
+- Different names like thread, task, or process refer to the "independently executing process", all representing a sequence of instructions running in order.
+
+</div>
+
+---
+
+<CodeSurfer theme={vsDark}>
+
+```csharp showNumbers
+ public void ServiceCollection(IServiceCollection services)
+    {
+        var xmlFile = "SB.Trading.Fixture.Api.Service.xml";
+        var xmlPath = Path.Combine(AppContext.BaseDirectory, xmlFile);
+        services.AddSwaggerGen(options =>
+        {
+            options.OperationFilter<AddRequiredHeaderParameter>();
+            options.IncludeXmlComments(xmlPath);
+            options.ExampleFilters();
+            options.EnableAnnotations();
+            options.CustomOperationIds(apiDesc => apiDesc
+                .TryGetMethodInfo(out var methodInfo) 
+                ? methodInfo.Name 
+                : apiDesc.ActionDescriptor.RouteValues["action"]);
+        });
+        services
+            .AddControllers()
+            .AddNewtonsoftJson(opt =>
+                opt.SerializerSettings.NullValueHandling = NullValueHandling.Ignore);
+        services.AddSwaggerExamples();
+        services.AddSwaggerExamplesFromAssemblyOf<CreateEventFixtureRequestExample>();
+    }
+```
+
+```diff 7:10 subtitle="Race condition issue"
+
+```
+
+```diff 11:23
+
+```
+
+```diff 25:32
+
+```
+
+</CodeSurfer>
+
+---
+ 
+ <div className="center-slide">
+
+  # Thank you!
+
+</div>

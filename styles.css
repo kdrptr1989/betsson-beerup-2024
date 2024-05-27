@@ -1,0 +1,50 @@
+.title-slide {
+  padding: 4em;
+}
+
+.content-slide {
+  padding: 1em 3em;
+}
+
+.quote-slide {
+  display: flex;
+  justify-content: center;
+  align-items: center;
+  height: 100vh;
+  font-size: 2em;
+  font-weight: bold;
+}
+
+.quote-slide .reference {
+  text-align: right;
+  font-size: 0.25em;
+}
+
+.image-slide {
+  width: 100%;
+  height: 100vh;
+  padding: 3em;
+}
+
+.image {
+  background-size: contain !important;
+}
+
+.center-slide {
+  width: 100%;
+  height: 100vh;
+  display: flex;
+  justify-content: center;
+  align-items: center;
+}
+
+.notes {
+  height: 50vh;
+  overflow-y: scroll;
+  font-size: 20px;
+  color: white;
+}
+
+.notes p {
+  display: block;
+}

@@ -1,0 +1,54 @@
+<!DOCTYPE html>
+<html>
+  <head>
+    <title>
+      Concurrent programming models in .NET | Betsson BeerUp 2024 | Peter Kadar
+    </title>
+    <style>
+      body {
+        margin: 0;
+        padding: 0;
+        background-color: #161a1e;
+      }
+      .center {
+        width: 100vw;
+        height: 100vh;
+        display: flex;
+        justify-content: center;
+        align-items: center;
+        overflow: hidden;
+      }
+      #iframe {
+        border: none;
+      }
+    </style>
+    <script type="application/javascript">
+      function scaleContent() {
+        var scaleX = window.visualViewport.width / 1600;
+        var scaleY = window.visualViewport.height / 900;
+        var scaleToFit = Math.min(scaleX, scaleY);
+        var container = document.getElementById("wrapper");
+        container.style.transform = "scale(" + scaleToFit + ")";
+      }
+      document.addEventListener("DOMContentLoaded", () => {
+        const iframe = document.getElementById("iframe");
+        iframe.onload = () => {
+          iframe.focus();
+          scaleContent();
+        };
+      });
+    </script>
+  </head>
+  <body>
+    <div class="center">
+      <div id="wrapper">
+        <iframe
+          src="https://dev-2024-conference-deck.vercel.app/"
+          width="1600"
+          height="900"
+          id="iframe"
+        ></iframe>
+      </div>
+    </div>
+  </body>
+</html>
