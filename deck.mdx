@@ -6,6 +6,15 @@ import 'prismjs/components/prism-csharp';
 
 import "./styles.css";
 
+import devworld_intro from "./assets/img/devworld_intro.png";
+import devworld from "./assets/img/devworld.jpg";
+import sync_vs_async_vs_concurent_parallel from "./assets/img/sync_vs_async_vs_concurent_paralell.png";
+import multitask from "./assets/img/multitask.webp";
+import process_thread from "./assets/img/process_thread.png";
+import deadlock from "./assets/img/deadlock.jpg";
+import deadlock2 from "./assets/img/deadlock2.jpg";
+import actor from "./assets/img/actor_diagram.png";
+
 export const theme = {
   googleFont: "https://fonts.googleapis.com/css?family=IBM+Plex+Mono",
   fonts: {
@@ -47,26 +56,33 @@ export const theme = {
 
 <div className="title-slide">
 
-  # Concurrent programming models in .NET
-  Péter Kádár
-
-</div>
-
----
- 
- <div className="center-slide">
-
-   ## Introduction
-  - developer more than 11 years ago 
-  - 1.5 years ago joined to Betsson Sportsbook
-  - 7+ years experience as outsourced developer
+# Concurrent programming models in .NET
+Péter Kádár
 
 </div>
 
 <Notes>
   <div class="notes">
-    <p>Betsson team, current responsibility</p>
-    <p>Different experience at different giant companies</p>
+    <p>10+ year dev experience</p>
+    <p>1.5 years ago joined to Betsson to the Sportsbook area</p>
+    <p>7+ years experience as outsourced developer</p>
+  </div>
+</Notes>
+
+---
+
+<div className="image-slide">
+
+### Tech Conference - Amsterdam
+
+  <Image className="image" src={devworld_intro} />
+</div>
+
+<Notes>
+  <div class="notes">
+    <p>Februar - 2 days conference</p>
+    <p>1.5 years ago joined to Betsson to the Sportsbook area</p>
+    <p>7+ years experience as outsourced developer</p>
   </div>
 </Notes>
 
@@ -74,7 +90,521 @@ export const theme = {
 
 <div className="content-slide">
 
-### Today's topic
+### Agenda
+
+#### Sync vs Concurrency vs Parallel
+  - Threads
+  - Race condition
+
+#### Concurrent models  
+   - Shared memory
+   - Message passing   
+
+</div>
+
+---
+
+<div className="image-slide">
+
+### Sync # Async # Concurrency # Parallel
+
+  <Image className="image" src={sync_vs_async_vs_concurent_parallel} />
+</div>
+
+<Notes>
+  <div class="notes">
+    <p>Async, Concurrent processing use context switch</p>
+    <p>Background thread waiting -> never block the main thread and main thread can pick a new task from thread pool</p>
+    <p>.NET Thread pool can handle 1000 different threads, Java: 10k</p>
+    <p>Parallel is different -> more CPU-s every CPU-s only do their stuff seperate</p>    
+    <p>Queue: 4 people</p>
+    <p>Order</p>
+    <p>Cashier tell the chef the new orders</p>
+    <p>Chef: put to the queue (currently working on 2 others)</p>
+    <p>Pay the hamburgers</p>
+    <p>Got order number</p>
+    <p>When chef pick the next task from the queue which one is number 3</p>
+    <p>Guys are waiting</p>
+    <p>Food is ready and start to eat</p>
+  </div>
+</Notes>
+
+---
+
+
+<table border="0">
+<tr>
+<td width="60%">
+<div className="content-slide">
+
+### What is concurrency?
+
+- Structure to execute multiple independent and interpedendent tasks in same period
+- One task maybe started before the previous one finished 
+- Minimize the CPU idle time
+##### Main concurrency model categories   
+   - Shared memory
+   - Message passing
+
+</div>
+</td>
+  <td> 
+    <div className="center-slide">
+    <Image width="85%" height="45vh" src={multitask} />
+    </div>
+  </td>
+</tr>
+</table>
+
+<Notes>
+  <div class="notes">
+    <p>CPU idle time -> grandma gamer pc for fb</p>
+    <p>Algoritm: FIFO, Shortest remaning time, Round robin</p>
+  </div>
+</Notes>
+
+---
+
+<CodeSurfer theme={vsDark}>
+
+```csharp showNumbers 
+    private const int PotSizeInLiter = 100;
+    private static int _emptyBottle = 100000;
+    private static int _beerStorage;
+
+    private static void Main()
+    {
+        var sw = Stopwatch.StartNew();
+
+        while (_emptyBottle > 0) { BrewBeer("IPA", PotSizeInLiter*2); }
+
+        sw.Stop();
+        Console.WriteLine($"Empty bottle: {_emptyBottle}");
+        Console.WriteLine($"All bottles: {_beerStorage} filled in {sw.Elapsed} time");
+    }
+
+    private static void BrewBeer(string beerName, int numberOfBottle)
+    {
+        Console.WriteLine($"Starting to brew {numberOfBottle} {beerName}...");
+
+        BuyIngredients();
+        WashThePots();
+        TakeWaterFromTheTap();
+        Boiling();
+        Cooling();
+        Fermentation();
+        Packaging(numberOfBottle);
+
+        Console.WriteLine($"{_beerStorage} {beerName} is ready!");
+    }
+
+    private static void BuyIngredients() => Thread.Sleep(300);
+    private static void WashThePots() => Thread.Sleep(200);
+    private static void TakeWaterFromTheTap() => Thread.Sleep(50);
+    private static void Boiling()
+    {
+        Thread.Sleep(100);
+        AddHops();
+        Thread.Sleep(100);
+    }
+    private static void AddHops() => Thread.Sleep(50);
+    ...
+    
+    // All bottles: 100000 filled in 00:03:25.0863427 time when PotSizeInLiter=100
+
+```
+
+```diff 5:14
+
+```
+
+```diff 16:40 
+
+```
+
+```diff 43:43 subtitle="Sync process - no shared resource, slow, resources are not utilized, guaranteed the order"
+```
+
+</CodeSurfer>
+
+<Notes>
+  <div class="notes">
+    <p>Example notes</p>
+  </div>
+</Notes>
+
+---
+
+<div className="content-slide">
+
+## Shared memory model - Async
+
+- Mostly used for I/O heavy task 
+- Thread Pool > Task queue > Task Scheduler
+- Never blocked main thread and many background threads
+- Async method > Await > .Net runtime gives back the actual thread to the thread pool
+- Long process whenever ready > another thread will process the result
+- Cancellation token
+
+</div>
+
+<Notes>
+  <div class="notes">
+    <p>External webservices, file r/w</p>
+    <p>Worker threads: </p>
+    <p>Whenever submit a task to the Thread Pool the task will be go to the Task queue</p>
+    <p>Task Scheduler responsible to schedule the task from the task queue and decide which worker should be execute it</p>
+    <p>Async -> tell to complier generate a state machine to handle async flow and allowing to use await keyword in the code to this method</p>
+    <p>Missing await -> it will run as a sync process on the same thread</p>
+  </div>
+</Notes>
+
+---
+
+<div className="image-slide">
+
+## Managed thread pool by Scheduler
+
+  <Image className="image" src={process_thread} />
+</div>
+
+<Notes>
+  <div class="notes">
+    <p>FIFO, Shortest remaning, Round robin</p>
+  </div>
+</Notes>
+
+---
+
+<CodeSurfer theme={vsDark} >
+
+```csharp showNumbers 
+    private const int PotSizeInLiter = 100;
+    private const int EmptyBottle = 100000;
+    private static int _beerStorage;
+
+    private static async Task Main()
+    {
+        var sw = Stopwatch.StartNew();
+
+        var brewList = new List<Task>();
+
+        for (var start = 0; start < EmptyBottle; start += PotSizeInLiter * 2)
+        {
+            var brewTask = BrewBeerAsync("IPA", PotSizeInLiter * 2);
+            brewList.Add(brewTask);
+        }
+
+        await Task.WhenAll(brewList);
+
+        sw.Stop();
+        Console.WriteLine($"Empty bottle: {EmptyBottle}");
+        Console.WriteLine($"All bottles: {_beerStorage} filled in {sw.Elapsed} time");
+    }
+
+    private static async Task BrewBeerAsync(string beerName, int numberOfBottle)
+    {
+        Console.WriteLine($"Starting to brew {numberOfBottle} {beerName}...");
+
+        var buyTask = BuyIngredientsAsync();
+        var washingTask = WashThePotsAsync();
+        var waterTask = TakeWaterFromTheTapAsync();
+
+        await Task.WhenAll(buyTask, washingTask, waterTask);
+
+        await BoilingAsync();
+        await CoolingAsync();
+        await FermentationAsync();
+        await PackagingAsync(numberOfBottle);
+
+        Console.WriteLine($"{_beerStorage} {beerName} is ready!");
+    }
+
+    private static Task PackagingAsync(int numberOfBottle)
+    {
+        _beerStorage += numberOfBottle;
+        return Task.CompletedTask;
+    }
+    ..
+    
+    //All filled bottles: 99500 filled in 00:00:06.6724608 time when PotSizeInLiter=100
+
+```
+
+```diff 3:19 subtitle="Wait for all tasks"
+
+```
+
+```diff 24:45 
+
+```
+
+```diff 42:58 subtitle="Race condition issue"
+```
+
+```csharp showNumbers 
+    private const int PotSizeInLiter = 100;
+    private const int EmptyBottle = 100000;
+    private static int _beerStorage;
+
+    private static readonly object Locker = new();
+    
+    private static async Task Main()
+    {
+        var sw = Stopwatch.StartNew();
+        var brewList = new List<Task>();
+
+        for (var start = 0; start < EmptyBottle; start += PotSizeInLiter * 2)
+        {
+            var brewTask = BrewBeerAsync("IPA", PotSizeInLiter * 2);
+            brewList.Add(brewTask);
+        }
+
+        await Task.WhenAll(brewList);
+
+        sw.Stop();
+        Console.WriteLine($"Empty bottle: {EmptyBottle}");
+        Console.WriteLine($"All bottles: {_beerStorage} filled in {sw.Elapsed} time");
+    }
+
+    private static async Task BrewBeerAsync(string beerName, int numberOfBottle)
+    {
+        Console.WriteLine($"Starting to brew {numberOfBottle} {beerName}...");
+
+        var buyTask = BuyIngredientsAsync();
+        var washingTask = WashThePotsAsync();
+        var waterTask = TakeWaterFromTheTapAsync();
+
+        await Task.WhenAll(buyTask, washingTask, waterTask);
+
+        await BoilingAsync();
+        await CoolingAsync();
+        await FermentationAsync();
+        await PackagingAsync(numberOfBottle);
+
+        Console.WriteLine($"{_beerStorage} {beerName} is ready!");
+    }   
+
+    private static async Task PackagingAsync(int numberOfBottle)
+    {
+        lock (Locker)
+        {
+            _beerStorage += numberOfBottle;
+        }
+        await Task.Delay(100);
+    }
+
+  // All filled bottles: 100000 filled in 00:00:06.6982469 time where PotSizeInLiter=100 with lock object
+
+
+```
+
+```diff 3:18 
+
+```
+
+```diff 42:58 subtitle="Thread safe solution with lock sync object"
+```
+
+</CodeSurfer>
+
+<Notes>
+  <div class="notes">
+    <p>Whenever 1 task got the thread and reach the shared memory and set e.g. 1050, but another task when they save context during context switch they have already set 1150</p>
+    <p>We will override each other numbers on the shared memory</p>
+  </div>
+</Notes>
+
+---
+
+<div className="content-slide">
+
+### Thread safe solution for race condition
+
+1. Sync primitives: lock statement, monitor class, semaphore class, manualReset, mutexes
+2. Concurrent collections: ConcurrentDictionary, ConcurrentQueue, ConcurentStack, ConcurentBag
+  (performance issue compare the sync version)
+3. Use immutable objects: readonly objects like records are immutable with value-based equality, use init pattern
+All thread can read only the value
+
+Issue:
+- Deadlock
+
+</div>
+
+<Notes>
+  <div class="notes">
+    <p>More threads are reading the same shared memory object and work with not valid data </p>
+  </div>
+</Notes>
+
+---
+
+<div className="content-slide">
+
+### Shared memory model - Multi threads
+
+- Async:  non-blocking execution between functions
+
+  - Task queue, scheduler, CPU allocation
+  - Foregound, background threads
+- Multithreading: concurrent execution of different functions 
+  - Thread queue, scheduler, CPU allocation (lock, Join(), Sleep() not consume CPU time)
+  - Foreground threads: main thread vs worker threads (own memory)
+  - Shared memory data: common instance object, static object (all thread) 
+  - Thread safe: immutable objects and/or sync primitives -> complex -> deadlock
+  - Strategy: use encapsulate logic into reusable classes - independent    
+
+</div>
+
+<Notes>
+  <div class="notes">
+    <p>Async: when you are waiting for I/O CPU is not necessary only waiting -> generate state machine for this process and give back to the main thread to process any other processes</p>
+    <p>Async: Whenever the I/O response arrived -> complier will schedule a new thread to handle the response</p>
+    <p>Foreground threads: CPU allocation, background threads: I/O bounded processes </p>
+    <p> CLR allocate own 1 MB memory</p>
+  </div>
+</Notes>
+
+---
+
+<CodeSurfer theme={vsDark} >
+
+```csharp showNumbers 
+    private const int PotSizeInLiter = 100;
+    private const int EmptyBottle = 100000;
+    private static int _beerStorage = 0;
+
+    private static void Main()
+    {
+        var sw = Stopwatch.StartNew();
+
+        for (var start = 0; start < EmptyBottle; start += PotSizeInLiter * 2)
+        {
+            new Thread(() => BrewBeer("IPA", PotSizeInLiter * 2)).Start();
+        }
+
+        sw.Stop();
+        Console.WriteLine($"Empty bottle: {EmptyBottle}");
+        Console.WriteLine($"All filled bottles: {_beerStorage} filled in {sw.Elapsed} time");
+    }
+
+    private static void BrewBeer(string beerName, int numberOfBottle)
+    {
+        Console.WriteLine($"Starting to brew {numberOfBottle} {beerName}...");
+
+         BuyIngredients();
+         WashThePots();
+         TakeWaterFromTheTap();
+         Boiling();
+         Cooling();
+         Fermentation();
+         Packaging(numberOfBottle);
+
+        Console.WriteLine($"{_beerStorage} {beerName} is ready!");
+    }
+
+    private static void Packaging(int numberOfBottle)
+    {
+         _beerStorage += numberOfBottle;
+         Task.Delay(100);
+    }
+    ...
+    // All filled bottles: 99400 filled in 00:00:04.7836539 time
+
+
+```
+
+```diff 3:18 
+
+```
+
+```diff 34:40 subtitle="Race condition"
+```
+
+```csharp showNumbers 
+    private const int PotSizeInLiter = 100;
+    private const int EmptyBottle = 100000;
+    private static int _beerStorage;
+
+    private static readonly object Locker = new();
+    
+    private static void Main()
+    {
+        var sw = Stopwatch.StartNew();
+
+        for (var start = 0; start < EmptyBottle; start += PotSizeInLiter * 2)
+        {
+            new Thread(() => BrewBeer("IPA", PotSizeInLiter * 2)).Start();
+        }
+
+        sw.Stop();
+        Console.WriteLine($"Empty bottle: {EmptyBottle}");
+        Console.WriteLine($"All filled bottles: {_beerStorage} filled in {sw.Elapsed} time");
+    }
+
+    private static void BrewBeer(string beerName, int numberOfBottle)
+    {
+        Console.WriteLine($"Starting to brew {numberOfBottle} {beerName}...");
+
+         BuyIngredients();
+         WashThePots();
+         TakeWaterFromTheTap();
+         Boiling();
+         Cooling();
+         Fermentation();
+         Packaging(numberOfBottle);
+
+        Console.WriteLine($"{_beerStorage} {beerName} is ready!");
+    }
+
+    private static void Packaging(int numberOfBottle)
+    {
+         Monitor.Enter(Locker);
+         try
+         {
+              if (_beerStorage >= 0)
+              {
+                   _beerStorage += numberOfBottle;
+              }
+         }
+         finally
+         {
+              Monitor.Exit(Locker);
+         }
+         Task.Delay(100);
+    }
+    ...
+    // All filled bottles: 100000 filled in 00:00:04.8008058 time
+
+```
+```diff 36:53 subtitle="Thread safe with monitor class"
+```
+
+</CodeSurfer>
+
+<Notes>
+  <div class="notes">
+  <p></p>
+  </div>
+</Notes>
+
+---
+
+<div>
+
+### Deadlock
+
+<table border="0">
+<tr className="image-slide">
+<td>
+ <Image width="80%" height="50vh" src={deadlock2} />
+</td>
+  <td> 
+     <Image width="80%" height="50vh" src={deadlock} />
+  </td>
+</tr>
+</table>
 
 </div>
 
@@ -82,61 +612,128 @@ export const theme = {
 
 <div className="content-slide">
 
-### What is Concurrency?
-
-- Concurrency is about composing and coordinating independently executing processes.
-- It is a way to structure a program to handle multiple tasks that could be independent or interdependent.
-- Different names like thread, task, or process refer to the "independently executing process", all representing a sequence of instructions running in order.
-
-</div>
-
----
-
-<CodeSurfer theme={vsDark}>
-
-```csharp showNumbers
- public void ServiceCollection(IServiceCollection services)
-    {
-        var xmlFile = "SB.Trading.Fixture.Api.Service.xml";
-        var xmlPath = Path.Combine(AppContext.BaseDirectory, xmlFile);
-        services.AddSwaggerGen(options =>
-        {
-            options.OperationFilter<AddRequiredHeaderParameter>();
-            options.IncludeXmlComments(xmlPath);
-            options.ExampleFilters();
-            options.EnableAnnotations();
-            options.CustomOperationIds(apiDesc => apiDesc
-                .TryGetMethodInfo(out var methodInfo) 
-                ? methodInfo.Name 
-                : apiDesc.ActionDescriptor.RouteValues["action"]);
-        });
-        services
-            .AddControllers()
-            .AddNewtonsoftJson(opt =>
-                opt.SerializerSettings.NullValueHandling = NullValueHandling.Ignore);
-        services.AddSwaggerExamples();
-        services.AddSwaggerExamplesFromAssemblyOf<CreateEventFixtureRequestExample>();
-    }
-```
-
-```diff 7:10 subtitle="Race condition issue"
-
-```
-
-```diff 11:23
-
-```
-
-```diff 25:32
-
-```
-
-</CodeSurfer>
-
----
+## Message passing 
  
- <div className="center-slide">
+Distributed system based on messaging communication like : message brokers
 
-  # Thank you!
+#### Message queuing
+
+- Publisher and Consumer services process data with own memory
+
+#### Actor model
+
+ - independent entities
+  - combined with pub/sub model
+  - no share state at all
 
 </div>
+
+<Notes>
+  <div class="notes">
+    <p>Example notes</p>
+  </div>
+</Notes>
+
+---
+
+<div className="image-slide">
+
+  <Image width="65%" height="80vh" src={actor} />
+</div>
+
+<Notes>
+  <div class="notes">  
+  </div>
+</Notes>
+
+---
+
+<div className="content-slide">
+
+### Results
+
+<table border="0">
+<tr>
+<td>
+ Sync
+</td>
+  <td> 
+    00:03:25.0863427
+  </td>
+    <td> 
+    Success
+  </td>
+</tr>
+<tr>
+<td>
+  Async w/o lock
+</td>
+  <td> 
+    00:00:06.6724608
+  </td>
+   <td> 
+    Failed
+  </td>
+</tr>
+<tr>
+<td>
+  Async w/ lock
+</td>
+  <td> 
+    00:00:06.6982469
+  </td>
+   <td> 
+    Success
+  </td>
+</tr>
+<tr>
+<td>
+  Threads w/o lock
+</td>
+  <td> 
+    00:00:04.7836539
+  </td>
+   <td> 
+    Failed
+  </td>
+</tr>
+<tr style="color:#ffff32;">
+<td>
+  Threads w/ lock
+</td>
+  <td> 
+    00:00:04.8008058
+  </td>
+   <td> 
+    Success
+  </td>
+</tr>
+</table>
+
+</div>
+
+<Notes>
+  <div class="notes">
+    <p>Example notes</p>
+  </div>
+</Notes>
+
+---
+
+<div className="image-slide">
+
+## Thank you 
+
+<Image className="image" src={devworld} />
+
+</div>
+
+<Notes>
+  <div class="notes">
+    <p>add QR code + links here</p>
+    <p>https://medium.com/@adarsh_tech/solid-understanding-of-async-await-and-thread-in-net-38fe58666756</p>
+    <p>https://www.albahari.com/threading</p>
+  </div>
+</Notes>
+
+---
