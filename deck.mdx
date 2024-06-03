@@ -14,6 +14,7 @@ import process_thread from "./assets/img/process_thread.png";
 import deadlock from "./assets/img/deadlock.jpg";
 import deadlock2 from "./assets/img/deadlock2.jpg";
 import actor from "./assets/img/actor_diagram.png";
+import qr_code from "./assets/img/qr_code.svg";
 
 export const theme = {
   googleFont: "https://fonts.googleapis.com/css?family=IBM+Plex+Mono",
@@ -320,10 +321,10 @@ Péter Kádár
         Console.WriteLine($"{_beerStorage} {beerName} is ready!");
     }
 
-    private static Task PackagingAsync(int numberOfBottle)
+    private static async Task PackagingAsync(int numberOfBottle)
     {
         _beerStorage += numberOfBottle;
-        return Task.CompletedTask;
+        await Task.Delay(100);
     }
     ..
     
@@ -448,7 +449,7 @@ Issue:
 
   - Task queue, scheduler, CPU allocation
   - Foregound, background threads
-- Multithreading: concurrent execution of different functions 
+  - Multithreading: concurrent execution of different functions 
   - Thread queue, scheduler, CPU allocation (lock, Join(), Sleep() not consume CPU time)
   - Foreground threads: main thread vs worker threads (own memory)
   - Shared memory data: common instance object, static object (all thread) 
@@ -724,7 +725,7 @@ Distributed system based on messaging communication like : message brokers
 
 ## Thank you 
 
-<Image className="image" src={devworld} />
+<Image width="80%" height="50vh" className="image" src={devworld} />
 
 </div>
 
@@ -737,3 +738,56 @@ Distributed system based on messaging communication like : message brokers
 </Notes>
 
 ---
+
+<div className="image-slide">
+
+## Thank you 
+
+<Image width="80%" height="50vh" className="image" src={qr_code} />
+
+</div>
+
+---
+
+<div class="content-slide">
+
+### Links
+
+<ul>
+  <li>
+    <a href="https://betsson-beerup.hu" target="_blank">
+      Betsson BeerUp Deck
+    </a>
+  </li>
+  <li>
+    <a
+      href="https://github.com/kdrptr1989/betsson-beerup-2024"
+      target="_blank">
+      Deck Repo
+    </a>
+  </li>
+  <li>
+    <a
+      href="https://replit.com/@kadarptr/Betsson-beerup"
+      target="_blank" >
+      Replit Links - Code Examples
+    </a>
+  </li>
+  <li>
+    <a href="https://www.albahari.com/threading" target="_blank">
+      Threading
+    </a>
+  </li>
+  <li>
+    <a href="https://www.linkedin.com/in/kdrptr" target="_blank">
+      LinkedIn
+    </a>
+  </li>
+   <li>
+    <a href="https://www.youtube.com/watch?v=hbO4Lp3Z3ow&t=955s" target="_blank">
+      Harish Kandala - Amsterdam DevWorld youtube recording
+    </a>
+  </li>
+</ul>
+
+</div>
