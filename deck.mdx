@@ -144,12 +144,12 @@ Péter Kádár
 
 ---
 
+### What is concurrency?
+
 <table border="0">
 <tr>
-<td width="53%">
+<td width="55%">
 <div className="content-slide">
-
-### What is concurrency?
 
 - Structure to execute multiple independent and interpedendent tasks simultaneously
 - One task maybe started before the previous one finished 
@@ -158,7 +158,7 @@ Péter Kádár
 </div>
 </td>
   <td> 
-    <div className="center-slide">
+    <div className="image-slide">
     <Image class="image" width="60%" src={philosophers} />
     </div>
   </td>
@@ -276,7 +276,7 @@ Péter Kádár
 
 <CodeSurfer theme={vsDark} >
 
-```csharp showNumbers 
+```csharp showNumbers subtitle="Async"
     private const int PotSizeInLiter = 100;
     private const int EmptyBottle = 100000;
     private static int _beerStorage;
@@ -340,7 +340,7 @@ Péter Kádár
 ```diff 42:58 subtitle="Race condition issue"
 ```
 
-```csharp showNumbers 
+```csharp showNumbers
     private const int PotSizeInLiter = 100;
     private const int EmptyBottle = 100000;
     private static int _beerStorage;
@@ -401,7 +401,7 @@ Péter Kádár
 
 ```
 
-```diff 42:58 subtitle="Thread safe solution with lock sync object"
+```diff 42:58 subtitle="Thread safe async with lock"
 ```
 
 </CodeSurfer>
@@ -464,7 +464,7 @@ Issue:
 
 <CodeSurfer theme={vsDark} >
 
-```csharp showNumbers 
+```csharp showNumbers subtitle="Multithreading"
     private const int PotSizeInLiter = 100;
     private const int EmptyBottle = 100000;
     private static int _beerStorage = 0;
@@ -572,7 +572,7 @@ Issue:
     // All filled bottles: 100000 filled in 00:00:04.8008058 time
 
 ```
-```diff 36:53 subtitle="Thread safe with monitor class"
+```diff 36:53 subtitle="Thread safe multithreading with monitor class"
 ```
 
 </CodeSurfer>
