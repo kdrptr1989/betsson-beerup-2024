@@ -150,7 +150,7 @@ Péter Kádár
 <td width="55%">
 <div className="content-slide">
 
-- Structure to execute multiple independent and interpedendent tasks simultaneously
+- Structure to execute multiple independent and interdependent tasks simultaneously
 - One task maybe started before the previous one finished 
 - Minimize the CPU idle time
 
@@ -175,7 +175,7 @@ Péter Kádár
 
 <CodeSurfer theme={vsDark}>
 
-```csharp showNumbers subtitle="Sync"
+```csharp showNumbers subtitle="Syncronized Brewing"
     private const int PotSizeInLiter = 100;
     private static int _emptyBottle = 100000;
     private static int _beerStorage;
@@ -258,12 +258,13 @@ Péter Kádár
 
 ## Shared memory model - Async
 
-- Non-blocking execution between functions 
-- Mainly for I/O heavy tasks   
-- Main Thread > async method > await > ThreadPool > Task Scheduler > allocate CPU time for the main thread (not blocking) >
-- await > Waiting for I/O result > Set state machine to waiting > 
-- I/O result ready > Scheduler allocate another thread
-- Shared resource between tasks
+###### Non-blocking execution between functions 
+###### Main Thread > Async method > Await > Release Main Thread 
+  
+  - Scheduler > Allocate CPU time to another task on the Main Thread (non-block)
+  - Await > Waiting for I/O result > Set state machine to waiting 
+  -  I/O result ready > Scheduler allocate the main thread which could be another one(id)
+###### Shared resource between tasks
 
 </div>
 
@@ -345,7 +346,7 @@ Péter Kádár
 
 ```
 
-```diff 3:19 subtitle="Wait for all tasks"
+```diff 1:19 subtitle="Wait for all tasks"
 
 ```
 
@@ -466,8 +467,7 @@ Issue:
 
   - Concurrent execution of different functions 
   - new Thread() -> foreground threads managed by developer
-  - Task.Run(() => {}) -> forced background threads managed by ThreadPool
-  - ThreadPool, Scheduler, CPU allocation 
+  - Task.Run(() => {}) -> forced background threads managed by ThreadPool  
   - Locking mechanism: lock, Join(), Sleep() => no CPU time allocation 
   - Shared resource between threads 
 
@@ -639,6 +639,8 @@ Issue:
     {
         var sw = Stopwatch.StartNew();
 
+        var brewList = new List<Task>();
+
         for (var start = 0; start < EmptyBottle; start += PotSizeInLiter * 2)
         {
           var brewTask = Task.Run(() => Brewing("IPA", PotSizeInLiter * 2));
@@ -688,11 +690,11 @@ Issue:
 
 ```
 
-```diff 7:19 subtitle="Task.Run() force background threads"
+```diff 7:21 subtitle="Task.Run() force background threads"
 
 ```
 
-```diff 48:56 subtitle="Background threads are managed by ThreadPool"
+```diff 48:58 subtitle="Background threads are managed by ThreadPool"
 ```
 
 </CodeSurfer>
