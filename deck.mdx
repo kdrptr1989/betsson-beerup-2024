@@ -214,9 +214,9 @@ Péter Kádár
     private static void TakeWaterFromTheTap() => Thread.Sleep(50);
     private static void Boiling()
     {
-        Task.Delay(100);
+        Thread.Sleep(1000);
         AddHops();
-        Task.Delay(100);
+        Thread.Sleep(100);
     }
     private static void AddHops() => Thread.Sleep(50);
     private static void Packaging(int numberOfBottle)
@@ -224,11 +224,11 @@ Péter Kádár
         _emptyBottle -= numberOfBottle;
         _beerCollector += numberOfBottle;
 
-       Task.Delay(100);
+       Thread.Sleep(100);
     }
     ...
     
-    // 100000 bottles filled in 00:03:25.0863427 time when PotSizeInLiter=100
+    //100000 bottles filled in 00:03:25.0863427 time
 
 ```
 
@@ -240,7 +240,7 @@ Péter Kádár
 
 ```
 
-```diff 44:53 subtitle="Sync-(sequential, no shared resource, CPU, slow) +(order)"
+```diff 44:53 subtitle="Sync | Sequential | No shared resource | CPU | Slow | Order"
 ```
 
 </CodeSurfer>
@@ -271,8 +271,6 @@ Péter Kádár
 <Notes>
   <div class="notes">
     <p>External webservices, file r/w</p>
-    <p>Worker threads: </p>
-    <p>Whenever submit a task to the Thread Pool the task will be go to the Task queue</p>
     <p>Task Scheduler responsible to schedule the task from the task queue and decide which worker should be execute it</p>
     <p>Async -> tell to complier generate a state machine to handle async flow and allowing to use await keyword in the code to this method</p>
     <p>Missing await -> it will run as a sync process on the same thread</p>
@@ -283,7 +281,7 @@ Péter Kádár
 
 <CodeSurfer theme={vsDark} >
 
-```csharp showNumbers subtitle="Async"
+```csharp showNumbers subtitle="Asynchronous Brewing"
     private const int PotSizeInLiter = 100;
     private const int EmptyBottle = 100000;
     private static int _beerStorage;
@@ -342,7 +340,7 @@ Péter Kádár
     Is background thread: False
     Starting to brew 200 IPA...
 
-    //99500 bottles filled in 00:00:06.6724608 time when PotSizeInLiter=100
+    //99500 bottles filled in 00:00:04.8920991 
 
 ```
 
@@ -354,10 +352,10 @@ Péter Kádár
 
 ```
 
-```diff 42:59 subtitle="Race condition issue"
+```diff 44:59 subtitle="Async | Race condition issue | Missing beers"
 ```
 
-```csharp showNumbers
+```csharp showNumbers subtitle="Asynchronous Brewing with Lock"
     private const int PotSizeInLiter = 100;
     private const int EmptyBottle = 100000;
     private static int _beerStorage;
@@ -384,6 +382,8 @@ Péter Kádár
 
     private static async Task BrewingAsync(string beerName, int numberOfBottle)
     {
+        Console.WriteLine($"Current thread ID: {Thread.CurrentThread.ManagedThreadId}");
+        Console.WriteLine($"Is background thread: {Thread.CurrentThread.IsBackground}");
         Console.WriteLine($"Starting to brew {numberOfBottle} {beerName}...");
 
         var buyTask = BuyIngredientsAsync();
@@ -398,7 +398,7 @@ Péter Kádár
         await PackagingAsync(numberOfBottle);
 
         Console.WriteLine($"{_beerStorage} {beerName} is ready!");
-    }   
+    }
 
     private static async Task PackagingAsync(int numberOfBottle)
     {
@@ -417,16 +417,16 @@ Péter Kádár
     Is background thread: False
     Starting to brew 200 IPA...
     
-    //100000 bottles filled in 00:00:06.6982469 time where PotSizeInLiter=100 with lock object
+    //100000 bottles filled in 00:00:04.9208566 time
 
 
 ```
 
-```diff 3:18 
+```diff 5:18 
 
 ```
 
-```diff 42:60 subtitle="Thread safe async with lock"
+```diff 45:62 subtitle="Async | Shared memory locking | Success"
 ```
 
 </CodeSurfer>
@@ -487,21 +487,25 @@ Issue:
 
 <CodeSurfer theme={vsDark} >
 
-```csharp showNumbers subtitle="Multithreading"
+```csharp showNumbers subtitle="Create Foreground Sync Threads"
     private const int PotSizeInLiter = 100;
     private const int EmptyBottle = 100000;
-    private static int _beerStorage = 0;
+    private static int _beerStorage;
 
     private static void Main()
     {
         var sw = Stopwatch.StartNew();
 
+        var brewList = new List<Thread>();
+        
         for (var start = 0; start < EmptyBottle; start += PotSizeInLiter * 2)
         {
             var foregroundThread = new Thread(() => Brewing("IPA", PotSizeInLiter * 2));
             foregroundThread.Start();
-            foregroundThread.Join();
+            brewList.Add(foregroundThread);
         }
+        
+        brewList.ForEach(x=> x.Join());
 
         sw.Stop();
         Console.WriteLine($"Empty bottle: {EmptyBottle}");
@@ -528,7 +532,7 @@ Issue:
     private static void Packaging(int numberOfBottle)
     {
          _beerStorage += numberOfBottle;
-         Task.Delay(100);
+         Thread.Sleep(100);
     }
     ...
 
@@ -540,22 +544,22 @@ Issue:
     Is background thread: False    
     Starting to brew 200 IPA...
 
-    //99400 bottles filled in 00:00:04.7836539 time
+    //99400 bottles filled in 00:00:09.9954682 time
 
 ```
 
-```diff 3:18 
+```diff 1:20
 
 ```
 
-```diff 19:36
+```diff 25:40
 
 ```
 
-```diff 38:53 subtitle="Race condition"
+```diff 42:57 subtitle="Sync Foreground Threads | Race condition | Missing Beers"
 ```
 
-```csharp showNumbers 
+```csharp showNumbers subtitle="Create Foreground Sync Threads with Lock"
     private const int PotSizeInLiter = 100;
     private const int EmptyBottle = 100000;
     private static int _beerStorage;
@@ -566,12 +570,16 @@ Issue:
     {
         var sw = Stopwatch.StartNew();
 
+        var brewList = new List<Thread>();
+        
         for (var start = 0; start < EmptyBottle; start += PotSizeInLiter * 2)
         {
             var foregroundThread = new Thread(() => Brewing("IPA", PotSizeInLiter * 2));
             foregroundThread.Start();
-            foregroundThread.Join();
+            brewList.Add(foregroundThread);
         }
+        
+        brewList.ForEach(x=> x.Join());
 
         sw.Stop();
         Console.WriteLine($"Empty bottle: {EmptyBottle}");
@@ -609,7 +617,7 @@ Issue:
          {
               Monitor.Exit(Locker);
          }
-         Task.Delay(100);
+         Thread.Sleep(100);
     }
     ...
 
@@ -618,17 +626,17 @@ Issue:
     Starting to brew 200 IPA...
 
     Current thread ID: 515
-    Is background thread: False
+    Is background thread: False    
     Starting to brew 200 IPA...
 
-    //100000 bottles filled in 00:00:04.8008058 time
+    //100000 bottles filled in 00:00:09.4188777 time
 
 ```
-```diff 40:66 subtitle="Foreground threads are not managed by ThreadPool"
+```diff 44:70 subtitle="Sync Foreground Threads | Thread safe with Lock"
 ```
 
 
-```csharp showNumbers 
+```csharp showNumbers subtitle="Create Background Async Threads for Tasks"
     private const int PotSizeInLiter = 100;
     private const int EmptyBottle = 100000;
     private static int _beerStorage;
@@ -643,8 +651,8 @@ Issue:
 
         for (var start = 0; start < EmptyBottle; start += PotSizeInLiter * 2)
         {
-          var brewTask = Task.Run(() => Brewing("IPA", PotSizeInLiter * 2));
-          brewList.Add(brewTask);
+            var brewTask = Task.Run(async () => await BrewingAsync("IPA", PotSizeInLiter * 2));
+            brewList.Add(brewTask);
         }
 
         await Task.WhenAll(brewList);
@@ -654,14 +662,27 @@ Issue:
         Console.WriteLine($"All filled bottles: {_beerStorage} filled in {sw.Elapsed} time");
     }
 
-    private static void Brewing(string beerName, int numberOfBottle)
+   private static async Task BrewingAsync(string beerName, int numberOfBottle)
     {
         Console.WriteLine($"Current thread ID: {Thread.CurrentThread.ManagedThreadId}");
         Console.WriteLine($"Is background thread: {Thread.CurrentThread.IsBackground}");
         Console.WriteLine($"Starting to brew {numberOfBottle} {beerName}...");
+
+        var buyTask = BuyIngredientsAsync();
+        var washingTask = WashThePotsAsync();
+        var waterTask = TakeWaterFromTheTapAsync();
+
+        await Task.WhenAll(buyTask, washingTask, waterTask);
+
+        await BoilingAsync();
+        await CoolingAsync();
+        await FermentationAsync();
+        await PackagingAsync(numberOfBottle);
+
+        Console.WriteLine($"{_beerStorage} {beerName} is ready!");
     }
 
-    private static void Packaging(int numberOfBottle)
+    private static async Task PackagingAsync(int numberOfBottle)
     {
          Monitor.Enter(Locker);
          try
@@ -675,7 +696,7 @@ Issue:
          {
               Monitor.Exit(Locker);
          }
-         Task.Delay(100);
+         await Task.Delay(100);
     }
     ...
     Current thread ID: 22
@@ -686,15 +707,19 @@ Issue:
     Is background thread: True
     Starting to brew 200 IPA...
 
-    //100000 bottles filled in 00:00:00.1891661 time
+    //100000 bottles filled in 00:00:04.9673226 time
+    //Background Threads with Shared memory vs Main Thread with Shared Memory
+```
+
+```diff 5:21 subtitle="Task.Run() forces to create background threads"
 
 ```
 
-```diff 7:21 subtitle="Task.Run() force background threads"
+```diff 26:44
 
 ```
 
-```diff 48:58 subtitle="Background threads are managed by ThreadPool"
+```diff 46:72 subtitle="Background Threads | Async | ThreadPool | Lock | Success"
 ```
 
 </CodeSurfer>
@@ -704,6 +729,15 @@ Issue:
   <p></p>
   </div>
 </Notes>
+
+---
+
+<div className="image-slide">
+
+### Sync # Async # Concurrency # Parallel
+
+  <Image className="image" src={combo} />
+</div>
 
 ---
 
@@ -762,6 +796,7 @@ Distributed system based on messaging communication like message brokers
   </div>
 </Notes>
 
+
 ---
 
 <div className="content-slide">
@@ -785,18 +820,18 @@ Distributed system based on messaging communication like message brokers
   Async w/o lock
 </td>
   <td> 
-    00:00:06.6724608
+    00:00:04.8920991
   </td>
    <td> 
     Failed
   </td>
 </tr>
-<tr>
+<tr style="color:#00e600;">
 <td>
   Async w/ lock
 </td>
   <td> 
-    00:00:06.6982469
+    00:00:04.9208566
   </td>
    <td> 
     Success
@@ -804,10 +839,10 @@ Distributed system based on messaging communication like message brokers
 </tr>
 <tr style="color:#b70000;">
 <td>
-  Foreground threads w/o lock
+  Foreground Sync Threads w/o lock
 </td>
   <td> 
-    00:00:04.7836539
+    00:00:09.9954682
   </td>
    <td> 
     Failed
@@ -815,10 +850,10 @@ Distributed system based on messaging communication like message brokers
 </tr>
 <tr>
 <td>
-  Foreground threads w/ lock
+  Foreground Sync Threads w/ lock
 </td>
   <td> 
-    00:00:04.8008058
+    00:00:09.4188777
   </td>
    <td> 
     Success
@@ -829,7 +864,7 @@ Distributed system based on messaging communication like message brokers
   Background threads w/ lock
 </td>
   <td> 
-     00:00:00.1891661 
+     00:00:04.9673226 
   </td>
    <td> 
     Success
@@ -841,7 +876,12 @@ Distributed system based on messaging communication like message brokers
 
 <Notes>
   <div class="notes">
-    <p>Example notes</p>
+    <p>Sync: the speed is not important but the order is very important</p>
+    <p>Async: I/O heavy task when we would like. Context swithc could be expensive.</p>
+    <p>Threads for CPU heavy tasks</p>
+    <p>Foreground threads: To create foregorund thread is expensive.It runs dependently from main thread but it blocked the main thread.</p>
+    <p>Background threads: Managed my .Net runtime and ThreadPool and the try to reduced the CPU idle time. Its good for CPU and I/O heavy tasks as well.</p>
+    <p>Difference: When foreground thread has finished the program will exit like when you don't wait the result of the Async or another background thread code the all background threads will stop.</p>
   </div>
 </Notes>
 
@@ -854,14 +894,6 @@ Distributed system based on messaging communication like message brokers
 <Image width="100%" height="80vh" className="image" src={devworld} />
 
 </div>
-
-<Notes>
-  <div class="notes">
-    <p>add QR code + links here</p>
-    <p>https://medium.com/@adarsh_tech/solid-understanding-of-async-await-and-thread-in-net-38fe58666756</p>
-    <p>https://www.albahari.com/threading</p>
-  </div>
-</Notes>
 
 ---
 
